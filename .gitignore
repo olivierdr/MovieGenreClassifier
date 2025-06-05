@@ -21,7 +21,7 @@ wheels/
 *.joblib
 *.pt 
 
-venv/
+env/
 
 
 .ipynb_checkpoints
