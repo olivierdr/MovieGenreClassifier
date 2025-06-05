@@ -9,7 +9,12 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 import warnings
-warnings.filterwarnings('ignore')
+from movie_classifier import MovieClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from torch.utils.data import Dataset, DataLoader
+from keyword_based_classifier import ThematicVectorClassifier, GENRE_KEYWORDS
+from movie_predictor import MovieGenrePredictor
 
 class MovieClassifier(nn.Module):
     """Neural network classifier using sentence embeddings"""
@@ -221,6 +226,11 @@ def train_and_evaluate_models(X_train, X_test, y_train, y_test, label_map):
     # Save the neural network model
     torch.save(classifier.state_dict(), 'embedding_classifier.pt')
     print("\nModel weights saved as 'embedding_classifier.pt'")
+
+    # Sauvegarder tous les modèles ensemble
+    predictor = MovieGenrePredictor(tfidf_clf, tfidf_vectorizer, embedding_model, embedding_clf, thematic_classifier)
+    predictor.save_models()
+    print("\nAll models saved together in 'movie_predictor.joblib'")
 
 def main():
     # Load and prepare data
