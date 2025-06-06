@@ -4,6 +4,31 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from collections import Counter
 import re
+from pathlib import Path
+import logging
+from datetime import datetime
+
+# Set up logging
+def setup_logging():
+    """Set up logging to both file and console."""
+    # Create logs directory if it doesn't exist
+    log_dir = Path("outputs/logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create a timestamp for the log file
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = log_dir / f"data_analysis_{timestamp}.log"
+    
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler()
+        ]
+    )
+    return log_file
 
 # Display configuration
 pd.set_option('display.max_columns', None)
@@ -12,23 +37,23 @@ plt.style.use('seaborn-v0_8')
 
 def load_and_explore_data(file_path):
     """Load and explore initial data"""
-    print("Loading data...")
+    logging.info("Loading data...")
     df = pd.read_csv(file_path)
     
-    print("\n=== Basic Information ===")
-    print(f"Number of rows: {len(df)}")
-    print(f"Number of columns: {len(df.columns)}")
-    print("\nColumn names:")
-    print(df.columns.tolist())
+    logging.info("\n=== Basic Information ===")
+    logging.info(f"Number of rows: {len(df)}")
+    logging.info(f"Number of columns: {len(df.columns)}")
+    logging.info("\nColumn names:")
+    logging.info(df.columns.tolist())
     
-    print("\n=== Data Preview ===")
-    print(df.head())
+    logging.info("\n=== Data Preview ===")
+    logging.info(df.head())
     
     return df
 
 def check_missing_values(df):
     """Analyze missing values"""
-    print("\n=== Missing Values Analysis ===")
+    logging.info("\n=== Missing Values Analysis ===")
     missing_values = df.isnull().sum()
     missing_percentage = (missing_values / len(df)) * 100
     
@@ -36,30 +61,34 @@ def check_missing_values(df):
         'Missing Values': missing_values,
         'Percentage': missing_percentage
     })
-    print(missing_info[missing_info['Missing Values'] > 0])
+    logging.info(missing_info[missing_info['Missing Values'] > 0])
     
     return missing_info
 
 def check_duplicates(df):
     """Detect and analyze duplicates"""
-    print("\n=== Duplicate Analysis ===")
+    logging.info("\n=== Duplicate Analysis ===")
     duplicates = df.duplicated()
-    print(f"Number of duplicates: {duplicates.sum()}")
-    print(f"Duplicate percentage: {(duplicates.sum() / len(df)) * 100:.2f}%")
+    logging.info(f"Number of duplicates: {duplicates.sum()}")
+    logging.info(f"Duplicate percentage: {(duplicates.sum() / len(df)) * 100:.2f}%")
     
     if duplicates.sum() > 0:
-        print("\nExample of duplicates:")
-        print(df[df.duplicated(keep=False)].sort_values(by=df.columns.tolist()).head())
+        logging.info("\nExample of duplicates:")
+        logging.info(df[df.duplicated(keep=False)].sort_values(by=df.columns.tolist()).head())
     
     return duplicates
 
-def analyze_text_length(df, text_column):
+def analyze_text_length(df, text_column, output_dir):
     """Analyze text lengths"""
-    print(f"\n=== Text Length Analysis ({text_column}) ===")
+    logging.info(f"\n=== Text Length Analysis ({text_column}) ===")
     df['text_length'] = df[text_column].str.len()
     
-    print("\nText length statistics:")
-    print(df['text_length'].describe())
+    logging.info("\nText length statistics:")
+    logging.info(df['text_length'].describe())
+    
+    # Create output directory for plots
+    plots_dir = Path(output_dir) / "plots"
+    plots_dir.mkdir(parents=True, exist_ok=True)
     
     # Visualize length distribution
     plt.figure(figsize=(10, 6))
@@ -67,17 +96,21 @@ def analyze_text_length(df, text_column):
     plt.title('Text Length Distribution')
     plt.xlabel('Text Length')
     plt.ylabel('Frequency')
-    plt.savefig('text_length_distribution.png')
+    plt.savefig(plots_dir / 'text_length_distribution.png')
     plt.close()
 
-def analyze_labels(df, label_column):
+def analyze_labels(df, label_column, output_dir):
     """Analyze label distribution"""
-    print(f"\n=== Label Distribution Analysis ({label_column}) ===")
+    logging.info(f"\n=== Label Distribution Analysis ({label_column}) ===")
     label_counts = df[label_column].value_counts()
-    print("\nLabel distribution:")
-    print(label_counts)
-    print("\nPercentages:")
-    print((label_counts / len(df) * 100).round(2))
+    logging.info("\nLabel distribution:")
+    logging.info(label_counts)
+    logging.info("\nPercentages:")
+    logging.info((label_counts / len(df) * 100).round(2))
+    
+    # Create output directory for plots
+    plots_dir = Path(output_dir) / "plots"
+    plots_dir.mkdir(parents=True, exist_ok=True)
     
     # Visualize label distribution
     plt.figure(figsize=(10, 6))
@@ -85,7 +118,7 @@ def analyze_labels(df, label_column):
     plt.title('Label Distribution')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig('label_distribution.png')
+    plt.savefig(plots_dir / 'label_distribution.png')
     plt.close()
 
 def clean_text(text):
@@ -123,8 +156,20 @@ def handle_duplicate_titles(df, title_column='Title', synopsis_column='Synopsis'
     return df
 
 def main():
+    # Set up logging
+    log_file = setup_logging()
+    logging.info("Starting data analysis")
+    
+    # Define paths
+    input_file = "data/raw/task.csv"
+    output_dir = "outputs/analysis"
+    
+    # Create output directory
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    
     # Load data
-    df = load_and_explore_data('task.csv')
+    df = load_and_explore_data(input_file)
     
     # Check missing values
     missing_info = check_missing_values(df)
@@ -134,28 +179,30 @@ def main():
     
     # Remove exact duplicates if present
     if duplicates.sum() > 0:
-        print("\nRemoving exact duplicates...")
+        logging.info("\nRemoving exact duplicates...")
         df = df.drop_duplicates()
-        print(f"New dataset size: {len(df)}")
+        logging.info(f"New dataset size: {len(df)}")
     
     # Handle duplicate movie titles
     df = handle_duplicate_titles(df)
     
     # Analyze text length
     text_column = 'Synopsis'
-    analyze_text_length(df, text_column)
+    analyze_text_length(df, text_column, output_dir)
     
     # Analyze label distribution
     label_column = 'Tag'
-    analyze_labels(df, label_column)
+    analyze_labels(df, label_column, output_dir)
     
     # Clean texts
-    print("\n=== Text Cleaning ===")
+    logging.info("\n=== Text Cleaning ===")
     df['cleaned_text'] = df[text_column].apply(clean_text)
     
     # Save cleaned dataset
-    df.to_csv('cleaned_task.csv', index=False)
-    print("\nCleaned dataset saved to 'cleaned_task.csv'")
+    output_file = output_path / "cleaned_data.csv"
+    df.to_csv(output_file, index=False)
+    logging.info(f"\nCleaned dataset saved to {output_file}")
+    logging.info(f"Analysis log saved to {log_file}")
 
 if __name__ == "__main__":
     main()

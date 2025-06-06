@@ -1,8 +1,10 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -18,17 +20,57 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-*.joblib
-*.pt 
 
-env/
+# Virtual Environment
+venv/
+ENV/
+.env
 
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
 
+# Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
 
+# Project specific
+# Outputs
+outputs/logs/*
+!outputs/logs/.gitkeep
+outputs/models/*
+!outputs/models/.gitkeep
+outputs/evaluation/metrics/*
+outputs/evaluation/plots/*
+
+# Data
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+!data/raw/task.csv  # Keep the original dataset
+!data/processed/movies_cleaned.csv  # Keep the cleaned dataset
+
+# Model files
+*.joblib
+*.pth
+*.pt
+*.bin
+*.h5
+*.hdf5
+*.model
+*.pkl
+*.pickle
+
+# Other
+*.log
 *.csv
 *.png
-!task.csv  # Keep the original dataset
-!cleaned_task.csv  # Keep the cleaned dataset
+!data/raw/task.csv
+!data/processed/movies_cleaned.csv
 
-*.log 
+# Keep the structure
+!**/.gitkeep 
