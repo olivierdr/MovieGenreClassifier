@@ -1,8 +1,6 @@
-# Git
 .git
 .gitignore
 
-# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -13,18 +11,15 @@ venv/
 ENV/
 .env
 
-# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
 .DS_Store
 
-# Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb
 
-# Project specific
 outputs/logs/*
 outputs/evaluation/metrics/*
 outputs/evaluation/plots/*
