@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Project specific
+outputs/logs/*
+outputs/evaluation/metrics/*
+outputs/evaluation/plots/*
+!outputs/models/*.joblib
+!outputs/models/*.pth
+
+# Exclude bonus dataset
+data/raw/bonus_task.csv
+
+# Keep the structure
+!**/.gitkeep 
