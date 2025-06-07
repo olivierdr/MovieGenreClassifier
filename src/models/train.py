@@ -37,6 +37,13 @@ def train_models():
         texts, labels, test_size=0.2, random_state=42, stratify=labels
     )
     
+    # Calculate class weights
+    class_counts = pd.Series(y_train).value_counts()
+    total_samples = len(y_train)
+    class_weights = {i: total_samples / (len(class_counts) * count) 
+                    for i, count in class_counts.items()}
+    class_weights = [class_weights[i] for i in range(len(class_counts))]
+    
     # Create output directory for models
     model_dir = Path("outputs/models")
     model_dir.mkdir(parents=True, exist_ok=True)
@@ -64,15 +71,17 @@ def train_models():
     device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
     print(f"Using device: {device}")
     
-    embedding_model = EmbeddingClassifier(384, len(label_map))
-    optimizer = torch.optim.AdamW(embedding_model.parameters(), lr=1e-4)
-    criterion = torch.nn.CrossEntropyLoss()
+    embedding_model = EmbeddingClassifier(384, len(label_map), class_weights=class_weights)
+    optimizer = torch.optim.AdamW(embedding_model.parameters(), lr=2e-4)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2)
+    criterion = torch.nn.CrossEntropyLoss(weight=torch.tensor(class_weights, device=device))
     
     # Convert labels to tensor
     y_train_tensor = torch.tensor(y_train.values, dtype=torch.long).to(device)
     
     # Training loop
-    for epoch in range(5):
+    best_f1 = 0
+    for epoch in range(10):  # Increased epochs
         embedding_model.train()
         total_loss = 0
         
@@ -83,6 +92,7 @@ def train_models():
         # Backward pass
         optimizer.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(embedding_model.parameters(), max_norm=1.0)  # Gradient clipping
         optimizer.step()
         
         # Evaluation
@@ -97,8 +107,22 @@ def train_models():
                 model_name=f"Embedding_Epoch_{epoch+1}"
             )
             all_metrics[f'Embedding_Epoch_{epoch+1}'] = epoch_metrics
+            
+            # DEBUG: Print keys to find correct F1 key
+            if epoch == 0:
+                print('DEBUG epoch_metrics keys:', epoch_metrics.keys())
+            
+            # Update learning rate based on F1 score
+            current_f1 = epoch_metrics['classification_report']['weighted avg']['f1-score']
+            scheduler.step(current_f1)
+            
+            # Save best model
+            if current_f1 > best_f1:
+                best_f1 = current_f1
+                best_model_state = embedding_model.state_dict()
     
-    # Final evaluation of embedding model
+    # Load best model for final evaluation
+    embedding_model.load_state_dict(best_model_state)
     embedding_model.eval()
     with torch.no_grad():
         test_outputs = embedding_model(X_test.tolist())

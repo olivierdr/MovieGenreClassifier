@@ -59,16 +59,22 @@ class TFIDFClassifier:
         return self.classifier.predict_proba(X)
 
 class EmbeddingClassifier(nn.Module):
-    def __init__(self, embedding_dim, num_classes):
+    def __init__(self, embedding_dim, num_classes, class_weights=None):
         super().__init__()
         self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
         self.classifier = nn.Sequential(
-            nn.Linear(embedding_dim, 256),
+            nn.Linear(embedding_dim, 512),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.BatchNorm1d(512),
+            nn.Dropout(0.3),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.BatchNorm1d(256),
+            nn.Dropout(0.3),
             nn.Linear(256, num_classes)
         )
         self.device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+        self.class_weights = torch.tensor(class_weights, device=self.device) if class_weights is not None else None
         self.to(self.device)
     
     def forward(self, texts):
