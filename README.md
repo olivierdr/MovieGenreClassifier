@@ -101,14 +101,18 @@ Challenges in this setting include handling label imbalance, accounting for labe
 MovieGenreClassifier/
 ├── data/
 │   ├── raw/           # Original, immutable data
+│   │   ├── task.csv           # Original dataset task
+│   │   └── bonus_task.csv     # Optional Multi-label classification task
 │   └── processed/     # Cleaned and processed data
+│       └── movies_cleaned.csv  # Cleaned dataset
 ├── outputs/
 │   ├── analysis/      # Data analysis results and plots
 │   ├── logs/         # Log files for data processing and model training
 │   └── models/       # Trained models and model artifacts
+│       ├── movie_tfidf_model.joblib  # TF-IDF model
+│       └── embedding_model.pth       # Embedding model
 ├── src/
 │   ├── data/         # Data processing scripts
-│   │   ├── analysis.py    # Data exploration and analysis
 │   │   └── clean_dataset.py  # Data cleaning pipeline
 │   ├── models/       # Model training and evaluation
 │   │   ├── model.py      # Model definitions
@@ -116,11 +120,14 @@ MovieGenreClassifier/
 │   ├── utils/        # Utility functions
 │   └── app.py        # Streamlit web application
 ├── tests/            # Test files
+├── Dockerfile        # Docker configuration
 ├── requirements.txt  # Project dependencies
 └── README.md        # Project documentation
 ```
 
-## Setup
+## Running the Project
+
+### Local Setup
 
 1. Create a virtual environment:
 ```bash
@@ -133,53 +140,35 @@ source env/bin/activate  # On Windows: env\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Pipeline
-
-The project follows this pipeline:
-
-1. Data Analysis and Cleaning:
-```bash
-# Run data analysis
-python src/data/analysis.py
-
-# Run data cleaning
-python src/data/clean_dataset.py
-```
-This will:
-- Analyze the raw data and generate plots in `outputs/analysis/`
-- Clean the data and save processed files in `data/processed/`
-- Generate logs in `outputs/logs/`
-
-2. Model Training:
+3. Train the models:
 ```bash
 python src/models/train.py
 ```
-This will:
-- Train both TF-IDF and Embedding models
-- Save models in `outputs/models/`
-- Generate training logs in `outputs/logs/`
 
-3. Web Application:
+4. Launch the Streamlit app:
 ```bash
 streamlit run src/app.py
 ```
-This will:
-- Start a web interface for movie genre prediction
-- Use both trained models for predictions
 
-## Development
+### Docker Setup
 
-- Use `src/` directory for source code
-- Add tests in `tests/` directory
-- Log files are stored in `outputs/logs/`
-- Models are saved in `outputs/models/`
-- Analysis results and plots are in `outputs/analysis/`
+1. Build the Docker image:
+```bash
+docker build -t movie-genre-classifier .
+```
 
-## Data Files
+2. Run the container:
+```bash
+docker run -p 8501:8501 movie-genre-classifier
+```
 
-- Raw data: `data/raw/task.csv`
-- Processed data:
-  - `data/processed/movies_cleaned.csv`: Clean dataset for training
-  - `data/processed/movies_checked_ambiguous.csv`: Full dataset with ambiguity flags
-  - `data/processed/movies_ambiguous.csv`: Only ambiguous entries
+The application will be available at `http://localhost:8501`
+
+Note: The Docker container includes all necessary dependencies and models. If you want to retrain the models inside the container, you can mount the data directory:
+
+```bash
+docker run -p 8501:8501 -v $(pwd)/data:/app/data movie-genre-classifier
+```
+
+
 

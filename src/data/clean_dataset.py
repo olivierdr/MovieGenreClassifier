@@ -56,7 +56,7 @@ def analyze_text_length(df):
     logging.info(f"Mean synopsis length (characters): {int(mean_length)}")
     
     # Create basic plot
-    plot_dir = Path("outputs/analysis/plots")
+    plot_dir = Path("outputs/analysis")
     plot_dir.mkdir(parents=True, exist_ok=True)
     
     plt.figure(figsize=(10, 6))
@@ -73,7 +73,7 @@ def analyze_labels(df):
     logging.info("Label Distribution: " + ", ".join([f"{k}: {v} ({label_percentages[k]}%)" for k, v in label_dist.items()]))
     
     # Create basic plot
-    plot_dir = Path("outputs/analysis/plots")
+    plot_dir = Path("outputs/analysis")
     plot_dir.mkdir(parents=True, exist_ok=True)
     
     plt.figure(figsize=(10, 6))
