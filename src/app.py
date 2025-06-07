@@ -32,7 +32,8 @@ def load_models():
     
     # Load embedding model
     embedding_model = EmbeddingClassifier(384, len(label_map))
-    embedding_model.load_state_dict(torch.load(embedding_model_path, map_location=embedding_model.device))
+    state = torch.load(embedding_model_path, map_location=embedding_model.device)
+    embedding_model.load_state_dict(state["model_state_dict"])
     embedding_model.eval()
     
     return tfidf_model, embedding_model, label_map
@@ -59,7 +60,11 @@ try:
             st.subheader("TF-IDF Prediction")
             tfidf_pred = tfidf_model.predict(synopsis)
             tfidf_probs = tfidf_model.predict_proba(synopsis)
-            
+            # Extract scalar if needed
+            if hasattr(tfidf_pred, '__getitem__'):
+                tfidf_pred = tfidf_pred[0]
+            if hasattr(tfidf_probs, '__getitem__'):
+                tfidf_probs = tfidf_probs[0]
             # Display prediction
             predicted_genre = list(label_map.keys())[tfidf_pred]
             st.write(f"Predicted genre: **{predicted_genre}**")
@@ -71,16 +76,17 @@ try:
         
         with col2:
             st.subheader("Embedding Prediction")
-            embedding_pred = embedding_model.predict(synopsis)
-            embedding_probs = embedding_model.predict_proba(synopsis)
+            # Ensure input is a list for the embedding model
+            embedding_pred = embedding_model.predict([synopsis])
+            embedding_probs = embedding_model.predict_proba([synopsis])
             
             # Display prediction
-            predicted_genre = list(label_map.keys())[embedding_pred]
+            predicted_genre = list(label_map.keys())[embedding_pred[0]]  # Get first prediction since we only have one input
             st.write(f"Predicted genre: **{predicted_genre}**")
             
             # Display probabilities
             st.write("Probabilities:")
-            for genre, prob in zip(label_map.keys(), embedding_probs):
+            for genre, prob in zip(label_map.keys(), embedding_probs[0]):  # Get first set of probabilities
                 st.write(f"- {genre}: {prob:.2%}")
     
 except Exception as e:
