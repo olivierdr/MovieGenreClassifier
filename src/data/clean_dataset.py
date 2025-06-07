@@ -27,6 +27,13 @@ def setup_logging():
     return log_file
 
 def load_and_explore_data(file_path='data/raw/task.csv'):
+    """Load and explore the dataset, checking first if the file exists."""
+    file_path = Path(file_path)
+    if not file_path.exists():
+        logging.error(f"Required file {file_path} not found. Please ensure task.csv is present in the data/raw directory.")
+        raise FileNotFoundError(f"Required file {file_path} not found")
+    
+    logging.info(f"Found {file_path}")
     df = pd.read_csv(file_path)
     logging.info("STARTING CLEANING DATA PROCESS")
     print("=" * 59)
